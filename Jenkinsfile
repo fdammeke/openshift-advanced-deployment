@@ -216,7 +216,7 @@ pipeline {
               destApp = 'tasks-blue'
             }
 
-            sh("oc set image dc/tasks tasks=\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${projectUser}-jenkins/tasks:${prodTag} --source=docker -n ${prodProject}")
+            sh("oc set image dc/${destApp} ${destApp}=\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${projectUser}-jenkins/tasks:${prodTag} --source=docker -n ${prodProject}")
 
             openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
             openshiftVerifyDeployment depCfg: prodProject, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '', waitUnit: 'sec'
