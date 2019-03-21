@@ -163,7 +163,7 @@ pipeline {
           // has been deployed successfully
           create_task_status = sh(
             returnStdout: true,
-            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X POST http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1"
+            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X POST http://tasks.${projectUser}-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1"
           ).trim()
 
           echo "Status: " + create_task_status
@@ -174,14 +174,14 @@ pipeline {
           echo "Retrieving tasks"
           retrieve_tasks = sh(
             returnStdout: true,
-            script: "curl -u 'tasks:redhat1' -H 'Content-Length: 0' -X GET http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks"
+            script: "curl -u 'tasks:redhat1' -H 'Content-Length: 0' -X GET http://tasks.${projectUser}-tasks-dev.svc.cluster.local:8080/ws/tasks"
           ).trim()
           echo "${retrieve_tasks}"
 
           echo "Deleting tasks"
           delete_task = sh(
             returnStdout: true,
-            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X DELETE http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1"
+            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X DELETE http://tasks.${projectUser}-tasks-dev.svc.cluster.local:8080/ws/tasks/1"
           ).trim()
 
         }
@@ -192,10 +192,9 @@ pipeline {
     stage('Copy Image to Nexus Docker Registry') {
       steps {
         echo "Copy image to Nexus Docker Registry"
+
+        sh("skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds=openshift:\$(oc whoami -t) --dest-creds=admin:admin123 docker://docker-registry-default.apps.7a47.openshift.opentlc.com/${projectUser}-tasks-dev/tasks:${devTag} docker://\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${params.user}-jenkins/tasks:${prodTag}")
         // TBD. Use skopeo to copy
-
-
-        // TBD: Tag the built image with the production tag.
 
       }
     }
