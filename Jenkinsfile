@@ -121,7 +121,7 @@ pipeline {
 
         // TBD: Deploy the image
         // 1. Update the image on the dev deployment config
-        sh("oc set image dc/tasks tasks=tasks:${devTag} -n ${devProject}")
+        sh("oc set image dc/tasks tasks=${devProject}/tasks:${devTag} --source=imagestreamtag -n ${devProject}")
         // 2. Update the config maps with the potentially changed properties files
        // 3. Reeploy the dev deployment
         sh("oc rollout latest dc/tasks -n ${devProject}")
