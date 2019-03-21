@@ -51,15 +51,6 @@ pipeline {
         }
       }
     }
-    //Using Maven call SonarQube for Code Analysis
-    stage('Code Analysis') {
-      steps {
-        echo "Running Code Analysis"
-
-        sh("mvn sonar:sonar -DskipTests=true -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
-
-      }
-    }
 
     // Using Maven run the unit tests
     stage('Unit Tests') {
@@ -78,6 +69,16 @@ pipeline {
         echo "Building version ${devTag}"
 
         sh("mvn clean install -DskipTests=true -s ./nexus_settings.xml")
+
+      }
+    }
+
+    //Using Maven call SonarQube for Code Analysis
+    stage('Code Analysis') {
+      steps {
+        echo "Running Code Analysis"
+
+        sh("mvn sonar:sonar -DskipTests=true -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
 
       }
     }
