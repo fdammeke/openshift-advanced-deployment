@@ -106,11 +106,10 @@ pipeline {
         // OR use the file you just published into Nexus:
         // "--from-file=http://nexus3.${prefix}-nexus.svc.cluster.local:8081/repository/releases/org/jboss/quickstarts/eap/tasks/${prodTag}/tasks-${prodTag}.war"
         dir('target') {
-          sh('oc start-build tasks --from-dir . --follow')
+          sh("oc start-build tasks --from-dir . --follow -n ${devProject}")
         }
 
-        sh("oc tag tasks:latest tasks:${devTag}")
-        // TBD: Tag the image using the devTag.
+        sh("oc tag tasks:latest tasks:${devTag} -n ${devProject}")
 
       }
     }
