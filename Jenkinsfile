@@ -51,14 +51,12 @@ pipeline {
         }
       }
     }
-
-    // Using Maven build the war file
-    // Do not run tests in this step
-    stage('Build War File') {
+    //Using Maven call SonarQube for Code Analysis
+    stage('Code Analysis') {
       steps {
-        echo "Building version ${devTag}"
+        echo "Running Code Analysis"
 
-        sh("mvn clean install -DskipTests=true -s ./nexus_settings.xml")
+        sh("mvn sonar:sonar -DskipTests=true -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
 
       }
     }
@@ -73,12 +71,13 @@ pipeline {
       }
     }
 
-    //Using Maven call SonarQube for Code Analysis
-    stage('Code Analysis') {
+    // Using Maven build the war file
+    // Do not run tests in this step
+    stage('Build War File') {
       steps {
-        echo "Running Code Analysis"
+        echo "Building version ${devTag}"
 
-        sh("mvn sonar:sonar -DskipTests=true -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
+        sh("mvn clean install -DskipTests=true -s ./nexus_settings.xml")
 
       }
     }
@@ -124,7 +123,7 @@ pipeline {
         sh("oc set image dc/tasks tasks=tasks:${devTag} -n ${devProject}")
         // 2. Update the config maps with the potentially changed properties files
        // 3. Reeploy the dev deployment
-        sh("oc rollout tasks latest")
+        sh("oc rollout latest dc/tasks")
        // 4. Wait until the deployment is running
        //    The following code will accomplish that by
        //    comparing the requested replicas
