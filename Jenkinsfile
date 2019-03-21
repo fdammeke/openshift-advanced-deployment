@@ -193,7 +193,7 @@ pipeline {
       steps {
         echo "Copy image to Nexus Docker Registry"
 
-        sh("skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds=openshift:\$(oc whoami -t) --dest-creds=admin:admin123 docker://docker-registry-default.apps.7a47.openshift.opentlc.com/${projectUser}-tasks-dev/tasks:${devTag} docker://\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${params.user}-jenkins/tasks:${prodTag}")
+        sh("skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds=openshift:\$(oc whoami -t) --dest-creds=admin:admin123 docker://docker-registry-default.apps.7a47.openshift.opentlc.com/${projectUser}-tasks-dev/tasks:${devTag} docker://\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${projectUser}-jenkins/tasks:${prodTag}")
         // TBD. Use skopeo to copy
 
       }
@@ -205,6 +205,20 @@ pipeline {
     stage('Blue/Green Production Deployment') {
       steps {
         echo "Blue/Green Deployment"
+
+        echo "Get active service"
+        get_service = sh(
+          returnStdout: true,
+          script: "oc get route tasks -n ${projectUser}-tasks-prod -o jsonpath='{ .spec.to.name }'"
+        ).trim()
+
+        if ( get_service == 'tasks-green' ) {
+          destApp = 'tasks-blue'
+        }
+
+        openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
+        openshiftVerifyDeployment depCfg: prodProject, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '', waitUnit: 'sec'
+        openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
 
         // TBD: 1. Determine which application is active
         //      2. Update the image for the other application
@@ -218,10 +232,12 @@ pipeline {
 
     stage('Switch over to new Version') {
       steps {
+
+        input "Switch Production?"
         // TBD: Stop for approval
 
-
         echo "Executing production switch"
+        sh ("oc set route-backends tasks ${destApp}")
         // TBD: After approval execute the switch
 
       }
