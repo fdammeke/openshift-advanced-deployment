@@ -239,7 +239,7 @@ pipeline {
         // TBD: Stop for approval
 
         echo "Executing production switch"
-        sh ("oc set route-backends tasks ${destApp} -n ${prodProject}")
+        sh('oc patch route example -p \'{"spec":{"to":{"name":"' + destApp + '"}}}\' -n ${prodProject}')
         // TBD: After approval execute the switch
 
       }
