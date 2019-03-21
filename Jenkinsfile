@@ -207,7 +207,7 @@ pipeline {
         echo "Blue/Green Deployment"
 
         echo "Get active service"
-        get_service = sh(
+        def get_service = sh(
           returnStdout: true,
           script: "oc get route tasks -n ${projectUser}-tasks-prod -o jsonpath='{ .spec.to.name }'"
         ).trim()
