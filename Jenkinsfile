@@ -205,21 +205,21 @@ pipeline {
     stage('Blue/Green Production Deployment') {
       steps {
         echo "Blue/Green Deployment"
-
-        echo "Get active service"
-        def get_service = sh(
-          returnStdout: true,
-          script: "oc get route tasks -n ${projectUser}-tasks-prod -o jsonpath='{ .spec.to.name }'"
-        ).trim()
-
-        if ( get_service == 'tasks-green' ) {
-          destApp = 'tasks-blue'
+        script {
+          echo "Get active service"
+          def get_service = sh(
+            returnStdout: true,
+            script: "oc get route tasks -n ${projectUser}-tasks-prod -o jsonpath='{ .spec.to.name }'"
+            ).trim()
+            
+            if ( get_service == 'tasks-green' ) {
+              destApp = 'tasks-blue'
+            }
+            
+            openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
+            openshiftVerifyDeployment depCfg: prodProject, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '', waitUnit: 'sec'
+            openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
         }
-
-        openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
-        openshiftVerifyDeployment depCfg: prodProject, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '', waitUnit: 'sec'
-        openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
-
         // TBD: 1. Determine which application is active
         //      2. Update the image for the other application
         //      3. Deploy into the other application
