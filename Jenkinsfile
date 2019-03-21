@@ -132,14 +132,18 @@ pipeline {
        //    (rc.status.readyReplicas)
        //
        script {
-         def dc = openshift.selector("dc", "tasks").object()
-         def dc_version = dc.status.latestVersion
-         def rc = openshift.selector("rc", "tasks-${dc_version}").object()
-         echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
-         while (rc.spec.replicas != rc.status.readyReplicas) {
-           echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
-           sleep 5
-           rc = openshift.selector("rc", "tasks-${dc_version}").object()
+         openshift.withCluster() {
+           openshift.withProject("${devProject}") {
+             def dc = openshift.selector("dc", "tasks").object()
+             def dc_version = dc.status.latestVersion
+             def rc = openshift.selector("rc", "tasks-${dc_version}").object()
+             echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
+             while (rc.spec.replicas != rc.status.readyReplicas) {
+               echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
+               sleep 5
+               rc = openshift.selector("rc", "tasks-${dc_version}").object()
+             }
+           }
          }
        }
 
