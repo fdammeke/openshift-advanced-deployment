@@ -155,23 +155,34 @@ pipeline {
       steps {
         echo "Running Integration Tests"
         script {
-          def status = "000"
+          def create_task_status = "000"
 
           // Create a new task called "integration_test_1"
           echo "Creating task"
           // The next bit works - but only after the application
           // has been deployed successfully
-          // status = sh(returnStdout: true, script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X POST http://tasks.${prefix}-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1").trim()
-          // echo "Status: " + status
-          // if (status != "201") {
-          //     error 'Integration Create Test Failed!'
-          // }
+          create_task_status = sh(
+            returnStdout: true,
+            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X POST http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1"
+          ).trim()
+
+          echo "Status: " + create_task_status
+          if (create_task_status != "201") {
+            error 'Integration Create Test Failed!'
+          }
 
           echo "Retrieving tasks"
-          // TBD: Implement check to retrieve the task
+          retrieve_tasks = sh(
+            returnStdout: true,
+            script: "curl -u 'tasks:redhat1' -H 'Content-Length: 0' -X GET http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks"
+          ).trim()
+          echo "${retrieve_tasks}"
 
           echo "Deleting tasks"
-          // TBD: Implement check to delete the task
+          delete_task = sh(
+            returnStdout: true,
+            script: "curl -sw '%{response_code}' -o /dev/null -u 'tasks:redhat1' -H 'Content-Length: 0' -X DELETE http://tasks.user9-tasks-dev.svc.cluster.local:8080/ws/tasks/integration_test_1"
+          ).trim()
 
         }
       }
