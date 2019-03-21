@@ -124,22 +124,23 @@ pipeline {
         sh("oc set image dc/tasks tasks=tasks:${devTag} -n ${devProject}")
         // 2. Update the config maps with the potentially changed properties files
        // 3. Reeploy the dev deployment
-        sh("oc rollout latest dc/tasks")
+        sh("oc rollout latest dc/tasks -n ${devProject}")
        // 4. Wait until the deployment is running
        //    The following code will accomplish that by
        //    comparing the requested replicas
        //    (rc.spec.replicas) with the running replicas
        //    (rc.status.readyReplicas)
        //
-
-      // def dc = openshift.selector("dc", "tasks").object()
-      // def dc_version = dc.status.latestVersion
-      // def rc = openshift.selector("rc", "tasks-${dc_version}").object()
-      // echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
-      // while (rc.spec.replicas != rc.status.readyReplicas) {
-      //    sleep 5
-      //    rc = openshift.selector("rc", "tasks-${dc_version}").object()
-      // }
+       script {
+        def dc = openshift.selector("dc", "tasks").object()
+        def dc_version = dc.status.latestVersion
+        def rc = openshift.selector("rc", "tasks-${dc_version}").object()
+        echo "Waiting for ReplicationController tasks-${dc_version} to be ready"
+        while (rc.spec.replicas != rc.status.readyReplicas) {
+          sleep 5
+          rc = openshift.selector("rc", "tasks-${dc_version}").object()
+        }
+      }
 
       }
     }
