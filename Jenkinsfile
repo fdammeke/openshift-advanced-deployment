@@ -78,7 +78,7 @@ pipeline {
       steps {
         echo "Running Code Analysis"
 
-        sh("mvn sonar:sonar -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
+        sh("mvn sonar:sonar -DskipTests=true -s ./nexus_settings.xml -Dsonar.host.url=http://\$(oc get route sonarqube -n ${projectUser}-sonarqube --template='{{ .spec.host }}')")
 
       }
     }
@@ -88,7 +88,7 @@ pipeline {
       steps {
         echo "Publish to Nexus"
 
-        sh("mvn deploy -s ./nexus_settings.xml")
+        sh("mvn -s ./nexus_settings.xml deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::http://\$(oc get route nexus3 -n ${projectUser}-nexus --template='{{ .spec.host }}')/repository/releases")
 
       }
     }
@@ -105,8 +105,11 @@ pipeline {
         // your current Jenkins workspace).
         // OR use the file you just published into Nexus:
         // "--from-file=http://nexus3.${prefix}-nexus.svc.cluster.local:8081/repository/releases/org/jboss/quickstarts/eap/tasks/${prodTag}/tasks-${prodTag}.war"
+        dir('target') {
+          sh('oc start-build tasks --from-dir . --follow')
+        }
 
-
+        sh("oc tag tasks:latest tasks:${devTag}")
         // TBD: Tag the image using the devTag.
 
       }
