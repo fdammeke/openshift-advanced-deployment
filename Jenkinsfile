@@ -110,8 +110,15 @@ pipeline {
         dir('target') {
           sh("oc start-build tasks --from-dir=. --follow -n ${devProject}")
         }
+        script {
+          openshift.withCluster() {
+            openshift.withProject("${devProject}") {
+              openshift.tag("tasks:latest", "tasks:${devTag}")
+            }
+          }
+        }
 
-        sh("oc tag tasks:latest tasks:${devTag} -n ${devProject}")
+        // sh("oc tag tasks:latest tasks:${devTag} -n ${devProject}")
 
       }
     }
@@ -231,7 +238,7 @@ pipeline {
                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                     }
                   }
-                  def connected = openshift.verifyService(new GStringImpl(${destApp}))
+                  def connected = openshift.verifyService(new GStringImpl(destApp)
                   if (connected) {
                     echo "Able to connect to ${destApp}"
                   } else {
