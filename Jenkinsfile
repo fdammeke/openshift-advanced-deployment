@@ -218,9 +218,26 @@ pipeline {
 
             sh("oc set image dc/${destApp} ${destApp}=\$(oc get route nexus-registry -n ${projectUser}-nexus --template='{{ .spec.host }}')/${projectUser}-jenkins/tasks:${prodTag} --source=docker -n ${prodProject}")
 
-            openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
-            openshiftVerifyDeployment depCfg: destApp, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '10', waitUnit: 'min'
-            openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
+            openshift.withCluster() {
+                openshift.withProject("${prodProject}") {
+                  def rm = openshift.selector("dc", destApp).rollout()
+                  timeout(10) {
+                    openshift.selector("dc", destApp).related('pods').untilEach(1) {
+                      return (it.object().status.phase == "Running")
+                    }
+                  }
+                  def connected = openshift.verifyService(destApp)
+                  if (connected) {
+                    echo "Able to connect to ${destApp}"
+                  } else {
+                    echo "Unable to connect to ${destApp}"
+                  }
+                }
+            }
+
+            // openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
+            // openshiftVerifyDeployment depCfg: destApp, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '10', waitUnit: 'min'
+            // openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
         }
         // TBD: 1. Determine which application is active
         //      2. Update the image for the other application
