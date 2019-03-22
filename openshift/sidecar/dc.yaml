@@ -1,0 +1,80 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app: logtofile
+  name: logtofile
+  selfLink: /apis/apps.openshift.io/v1/namespaces/user9-logging/deploymentconfigs/logtofile
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    app: logtofile
+    deploymentconfig: logtofile
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+    spec:
+        app: logtofile
+        deploymentconfig: logtofile
+    spec:
+      containers:
+      - name: logtofile
+        image: docker.io/wkulhanek/logtofile@sha256:ef013bc12e3d6baa56ff1b8b9323bdecfec69d2898ce7b4a276089e55fdebe0c
+        imagePullPolicy: Always
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp
+          name: output
+      - name: logtostdout
+        command:
+        - /bin/sh
+        - -c
+        - tail -f /tmp/datelog.txt
+        image: docker.io/busybox:latest
+        imagePullPolicy: Always
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /tmp
+          name: output
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - emptyDir: {}
+        name: output
+  test: false
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - logtofile
+      from:
+        kind: ImageStreamTag
+        name: logtofile:latest
+        namespace: user9-logging
+    type: ImageChange

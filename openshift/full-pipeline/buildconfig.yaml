@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: BuildConfig
+metadata:
+    labels:
+        app: tasks
+    name: tasks
+spec:
+    source:
+        git:
+            ref: master
+            uri: https://github.com/fdammeke/openshift-advanced-deployment.git
+        sourceSecret:
+            name: "gogs"
+    strategy:
+        jenkinsPipelineStrategy:
+            jenkinsfilePath: Jenkinsfile
+        type: JenkinsPipeline
