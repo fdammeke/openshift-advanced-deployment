@@ -229,7 +229,7 @@ pipeline {
                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                     }
                   }
-                  def connected = openshift.verifyService("${destApp}")
+                  def connected = openshift.verifyService(new GStringImpl("${destApp}"))
                   if (connected) {
                     echo "Able to connect to ${destApp}"
                   } else {
