@@ -1,3 +1,5 @@
+import org.codehaus.groovy.runtime.GStringImpl;
+
 // Set your project Prefix
 def prefix      = "user9"
 
@@ -229,7 +231,7 @@ pipeline {
                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                     }
                   }
-                  def connected = openshift.verifyService(new GStringImpl("${destApp}"))
+                  def connected = openshift.verifyService(new GStringImpl(${destApp}))
                   if (connected) {
                     echo "Able to connect to ${destApp}"
                   } else {
