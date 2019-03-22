@@ -238,14 +238,9 @@ pipeline {
                       return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                     }
                   }
-                  def connected = openshift.verifyService(new GStringImpl(destApp))
-                  if (connected) {
-                    echo "Able to connect to ${destApp}"
-                  } else {
-                    echo "Unable to connect to ${destApp}"
-                  }
                 }
             }
+            openshiftVerifyService namespace: prodProject, svcName: destApp, verbose: 'false'
 
             // openshiftDeploy depCfg: destApp, namespace: prodProject, verbose: 'false', waitTime: '', waitUnit: 'sec'
             // openshiftVerifyDeployment depCfg: destApp, namespace: prodProject, replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '10', waitUnit: 'min'
