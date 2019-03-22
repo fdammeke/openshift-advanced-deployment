@@ -220,13 +220,16 @@ pipeline {
 
             openshift.withCluster() {
                 openshift.withProject("${prodProject}") {
-                  def rm = openshift.selector("dc", destApp).rollout()
+                  def rm = openshift.selector("dc", "${destApp}").rollout()
                   timeout(10) {
-                    openshift.selector("dc", destApp).related('pods').untilEach(1) {
-                      return (it.object().status.phase == "Running")
+                    def latestDeploymentVersion = openshift.selector("dc","${destApp}").object().status.latestVersion
+                    def rc = openshift.selector("rc", "${destApp}-${latestDeploymentVersion}")
+                    rc.untilEach(1){
+                      def rcMap = it.object()
+                      return (rcMap.status.replicas.equals(rcMap.status.readyReplicas))
                     }
                   }
-                  def connected = openshift.verifyService(destApp)
+                  def connected = openshift.verifyService("${destApp}")
                   if (connected) {
                     echo "Able to connect to ${destApp}"
                   } else {
